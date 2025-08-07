@@ -6,22 +6,46 @@ let getCurrentUserCart = async (req, res) => {
         if (req.user.role !== "user") {
             return res.status(403).json({ message: "Only Users can access their cart" });
         }
-        let userCart = await CartModel.find({ userID: req.user._id }).populate({
-            path: 'cartItems.prdID',
-            model: 'Product',
-            select: 'images name price stock'
-        })
-        .populate({
-            path: 'cartItems.variantId',
-            model: 'ProductVariant',
-            select: 'sku price quantity images'
-        });
 
-        res.status(200).json(userCart);
+        let cart = await CartModel.findOne({ userID: req.user._id })
+            .populate({
+                path: 'cartItems.prdID',
+                model: 'Product',
+                select: 'imageCover images name price stock'
+            })
+            .populate({
+                path: 'cartItems.variantId',
+                model: 'ProductVariant',
+                select: 'sku price quantity images'
+            });
+
+        if (!cart) {
+            return res.status(200).json([]);
+        }
+
+        // ✅ حساب التوتال من جديد
+        let subTotal = 0;
+        for (const item of cart.cartItems) {
+            const product = item.prdID;
+            let price = product.price;
+
+            if (item.variantId && item.variantId.price) {
+                price = item.variantId.price;
+            }
+
+            subTotal += price * item.quantity;
+        }
+
+        cart.total = subTotal;
+        await cart.save(); // optional - لو عايز تحفظ التوتال الجديد
+
+        res.status(200).json([cart]); // انت بترجع array
     } catch (error) {
+        console.error(error);
         res.status(500).json({ message: "Server error", error });
     }
 };
+
 
 let clearCart = async (req, res) => {
     try {

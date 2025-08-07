@@ -307,7 +307,7 @@ router.get('/', authorizeAdmin, getAllOrders);
 router.get('/:id', getOrderById);
 router.get('/user/:userId', getUserOrders);
 router.post('/', createOrder);
-router.patch('/:id/cancel', cancelOrder);
+router.delete('/:id/cancel', cancelOrder);
 //my
 
 // Admin only route

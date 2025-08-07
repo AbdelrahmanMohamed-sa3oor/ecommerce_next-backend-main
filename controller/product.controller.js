@@ -8,7 +8,7 @@ exports.getNewArrivals = catchAsync(async (req, res, next) => {
     try {
         const products = await Product.find()
             .sort({ createdAt: -1 })
-            .limit(8)
+            .limit(5)
             .populate('productVariants');
 
         res.status(200).json({
@@ -36,7 +36,7 @@ exports.getBestSellers = catchAsync(async (req, res, next) => {
         }
       },
       { $sort: { totalSold: -1 } },
-      { $limit: 8 },
+      { $limit: 5 },
       {
         $lookup: {
           from: 'products',
@@ -92,14 +92,14 @@ exports.getBestSellers = catchAsync(async (req, res, next) => {
 
     let dataToReturn = bestSellingItems;
 
-    if (bestSellingItems.length < 8) {
+    if (bestSellingItems.length < 5) {
       const existingProductIds = bestSellingItems.map(item => item._id);
 
       const extraProducts = await Product.find({
         _id: { $nin: existingProductIds }
       })
         .sort({ createdAt: -1 })
-        .limit(8 - bestSellingItems.length)
+        .limit(5 - bestSellingItems.length)
         .select('_id name price imageCover productVariants') // basic fields
         .lean();
 
@@ -107,7 +107,7 @@ exports.getBestSellers = catchAsync(async (req, res, next) => {
         _id: p._id,
         name: p.name,
         price: p.price,
-        image: p.imageCover,
+        imageCover: p.imageCover,
         hasVariants: p.productVariants && p.productVariants.length > 0,
         totalSold: 0,
         variant: null
@@ -209,7 +209,7 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
 
         // Pagination
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 12;
+        const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
         // Query products
@@ -568,7 +568,7 @@ exports.getRelatedProducts = catchAsync(async (req, res, next) => {
         const relatedProducts = await Product.find({
             _id: { $ne: currentProduct._id }, // استبعاد المنتج الحالي
             category: currentProduct.category // نفس الكاتيجوري
-        }).limit(8); // ممكن تحدد العدد
+        }).limit(5); // ممكن تحدد العدد
 
         res.status(200).json({
             status: 'success',

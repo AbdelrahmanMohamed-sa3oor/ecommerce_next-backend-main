@@ -10,6 +10,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage }).single('image');
 // utils/mailer.js
 const nodemailer = require('nodemailer');
+const User = require('../models/user.model');
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -226,7 +227,14 @@ const getOrderById = async (req, res, next) => {
         const { id } = req.params;
         const order = await Order.findById(id)
             .populate('user')
-            .populate('items.product');
+            .populate({
+                path: 'cartItems.product',
+                model: 'Product'
+            })
+            .populate({
+                path: 'cartItems.variantId',
+                model: 'ProductVariant'
+            });
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -235,17 +243,22 @@ const getOrderById = async (req, res, next) => {
         res.status(200).json({ status: 'success', order });
     } catch (err) {
         res.status(500).json({
-            status: 'error', message: "Failed to retrieve order", error: err.message
+            status: 'error',
+            message: "Failed to retrieve order",
+            error: err.message
         });
     }
 };
+
 
 const getUserOrders = async (req, res, next) => {
     try {
         const { userId } = req.params;
         const orders = await Order.find({ user: userId })
-            .populate('items.product')
+            .populate('cartItems.product')
+            .populate('cartItems.variantId')
             .sort('-createdAt');
+
 
         res.status(200).json({ status: 'success', orders });
     } catch (err) {
@@ -282,11 +295,96 @@ const updateOrderStatus = async (req, res, next) => {
         });
     }
 };
+// const createOrderWithCart = async (req, res, next) => {
+//     try {
+//         const userId = req.user._id;
+
+//         // Validate required fields
+//         const requiredFields = ['name', 'phone', 'address', 'city', 'email'];
+//         const missingFields = requiredFields.filter(field => !req.body[field]);
+//         if (missingFields.length > 0) {
+//             return res.status(400).json({
+//                 status: 'error',
+//                 message: `Missing required fields: ${missingFields.join(', ')}`
+//             });
+//         }
+
+//         // Get cart and validate
+//         const cart = await Cart.findOne({ userID: userId }).populate('cartItems.prdID');
+//         if (!cart || !cart.cartItems.length) {
+//             return res.status(400).json({
+//                 status: 'error',
+//                 message: 'Cart is empty'
+//             });
+//         }
+
+//         // Validate stock for each item
+//         for (const item of cart.cartItems) {
+//             const variant = await ProductVariant.findById(item.variantId);
+//            if (!variant) {
+//     throw new Error(`Variant not found for variantId: ${item.variantId || 'undefined'} in cart item: ${JSON.stringify(item)}`);
+// }
+
+//             if (variant.stock < item.quantity) {
+//                 throw new Error(`Insufficient stock for product ${variant.name}`);
+//             }
+//         }
+
+//         // Start transaction
+//         const session = await mongoose.startSession();
+//         session.startTransaction();
+
+//         try {
+//             // Create order
+//             const order = await Order.create([
+//                 {
+//                     user: userId,
+//                     items: cart.cartItems,
+//                     total: cart.total,
+//                     ...req.body,
+//                     status: 'pending'
+//                 }
+//             ], { session });
+
+//             // Update variant stock
+//             for (const item of cart.cartItems) {
+//                 const variant = await Product.findById(item.product);
+//                 variant.stock -= item.quantity;
+//                 await variant.save({ session });
+//             }
+
+//             // Clear cart
+//             await Cart.findOneAndDelete({ userID: userId }, { session });
+
+//             // Commit transaction
+//             await session.commitTransaction();
+//             session.endSession();
+
+//             // Populate and return order
+//             const populatedOrder = await order
+//                 .populate('user')
+//                 .populate('items.product');
+
+//             res.status(201).json({ status: 'success', populatedOrder });
+//         } catch (error) {
+//             if (session && session.inTransaction()) {
+//                 await session.abortTransaction();
+//             }
+//             session.endSession();
+//             throw error;
+//         }
+//     } catch (err) {
+//         res.status(500).json({
+//             status: 'error',
+//             message: err.message || 'Failed to create order',
+//             error: err.message
+//         });
+//     }
+// };
 const createOrderWithCart = async (req, res, next) => {
     try {
         const userId = req.user._id;
 
-        // Validate required fields
         const requiredFields = ['name', 'phone', 'address', 'city', 'email'];
         const missingFields = requiredFields.filter(field => !req.body[field]);
         if (missingFields.length > 0) {
@@ -296,7 +394,6 @@ const createOrderWithCart = async (req, res, next) => {
             });
         }
 
-        // Get cart and validate
         const cart = await Cart.findOne({ userID: userId }).populate('cartItems.prdID');
         if (!cart || !cart.cartItems.length) {
             return res.status(400).json({
@@ -305,14 +402,26 @@ const createOrderWithCart = async (req, res, next) => {
             });
         }
 
-        // Validate stock for each item
+        // Validate stock
         for (const item of cart.cartItems) {
-            const variant = await Product.findById(item.product);
-            if (!variant) {
-                throw new Error(`Variant not found for product ${item.product}`);
-            }
-            if (variant.stock < item.quantity) {
-                throw new Error(`Insufficient stock for product ${variant.name}`);
+            const product = item.prdID;
+            if (product.hasVariants) {
+                if (!item.variantId) {
+                    throw new Error(`Missing variantId for product ${product.name}`);
+                }
+
+                const variant = await ProductVariant.findById(item.variantId);
+                if (!variant) {
+                    throw new Error(`Variant not found for variantId: ${item.variantId} in cart item`);
+                }
+
+                if (variant.stock < item.quantity) {
+                    throw new Error(`  outOfStock for the product `);
+                }
+            } else {
+                if (product.stock < item.quantity) {
+                    throw new Error(`This product does not provide this quantity. `);
+                }
             }
         }
 
@@ -321,7 +430,6 @@ const createOrderWithCart = async (req, res, next) => {
         session.startTransaction();
 
         try {
-            // Create order
             const order = await Order.create([
                 {
                     user: userId,
@@ -332,24 +440,30 @@ const createOrderWithCart = async (req, res, next) => {
                 }
             ], { session });
 
-            // Update variant stock
             for (const item of cart.cartItems) {
-                const variant = await Product.findById(item.product);
-                variant.stock -= item.quantity;
-                await variant.save({ session });
+                const product = item.prdID;
+
+                if (product.hasVariants) {
+                    const variant = await ProductVariant.findById(item.variantId);
+                    variant.stock -= item.quantity;
+                    await variant.save({ session });
+                } else {
+                    const simpleProduct = await Product.findById(product._id);
+                    simpleProduct.stock -= item.quantity;
+                    await simpleProduct.save({ session });
+                }
             }
 
-            // Clear cart
             await Cart.findOneAndDelete({ userID: userId }, { session });
 
-            // Commit transaction
             await session.commitTransaction();
             session.endSession();
 
-            // Populate and return order
-            const populatedOrder = await order
+            const populatedOrder = await Order.findById(order[0]._id)
                 .populate('user')
-                .populate('items.product');
+                .populate('cartItems.product')
+                .populate('cartItems.variantId');
+
 
             res.status(201).json({ status: 'success', populatedOrder });
         } catch (error) {
@@ -367,6 +481,40 @@ const createOrderWithCart = async (req, res, next) => {
         });
     }
 };
+
+
+// const cancelOrder = async (req, res, next) => {
+//     try {
+//         const { id } = req.params;
+//         const order = await Order.findById(id);
+
+//         if (!order) {
+//             return res.status(404).json({ message: "Order not found" });
+//         }
+
+//         if (order.status !== 'pending') {
+//             return res.status(400).json({
+//                 message: "Only pending orders can be cancelled"
+//             });
+//         }
+
+//         order.status = 'cancelled';
+//         await order.save();
+
+//         const populatedOrder = await order
+//             .populate('user')
+//   .populate('cartItems.product')
+//   .populate('cartItems.variantId');
+
+//         res.status(200).json({ status: 'success', populatedOrder });
+//         await sendMail(order.user.email, 'تم إلغاء الطلب', `تم إلغاء طلبك رقم ${order._id}.`);
+//     } catch (err) {
+//         res.status(500).json({
+//             status: 'error', message: "Failed to cancel order", error: err.message
+//         });
+//     }
+// };
+
 
 const cancelOrder = async (req, res, next) => {
     try {
@@ -386,18 +534,21 @@ const cancelOrder = async (req, res, next) => {
         order.status = 'cancelled';
         await order.save();
 
-        const populatedOrder = await order
-            .populate('user')
-            .populate('items.product');
+        const user = await User.findById(order.userID);
+        if (user?.email) {
+            await sendMail(user.email, 'تم إلغاء الطلب', `تم إلغاء طلبك رقم ${order._id}.`);
+        }
 
-        res.status(200).json({ status: 'success', populatedOrder });
-        await sendMail(order.user.email, 'تم إلغاء الطلب', `تم إلغاء طلبك رقم ${order._id}.`);
+        res.status(200).json({ status: 'success', message: 'Order cancelled successfully' });
     } catch (err) {
         res.status(500).json({
-            status: 'error', message: "Failed to cancel order", error: err.message
+            status: 'error',
+            message: "Failed to cancel order",
+            error: err.message
         });
     }
 };
+
 
 module.exports = {
     getAllOrders,

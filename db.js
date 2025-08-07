@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const MONGODB_URI = 'mongodb://localhost:27017/nextjs-blog';
+const MONGODB_URI = 'mongodb+srv://abdelrahmansa3oor:QMDrRnuyjAq7Mk0V@ecommerce-cluster.pyvydra.mongodb.net/ecommerce?retryWrites=true&w=majority&appName=ecommerce-cluster'
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
