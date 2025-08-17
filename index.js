@@ -60,7 +60,7 @@ async function connectToDatabase() {
     try {
         const db = await mongoose.connect(process.env.CONNECTION_STRING, opts);
         cachedDb = db;
-        console.log('MongoDB connection established');
+        console.log('MongoDB connection established ok');
         return db;
     } catch (err) {
         console.log('MongoDB connection error:', err);
