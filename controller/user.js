@@ -718,8 +718,12 @@ const removeAddress = async (req, res, next) => {
     }
 };
 //------------------------------------------------------------
+// console.log(process.env.EMAIL);
+// console.log(process.env.PASSWORD);
 
 const transporter = nodemailer.createTransport({
+
+
     service: 'gmail',
     auth: {
         user: process.env.EMAIL,
@@ -818,47 +822,79 @@ const generateTokenExpiration = () => {
 };
 
 const forgotPassword = async (req, res, next) => {
-    try {
-        const { email } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
 
-        // Check if user is a Google user
-        if (user.isGoogleUser) {
-            return res.status(400).json({
-                message: 'Google users cannot reset their password. Please use Google to sign in.'
-            });
-        }
-
-        const resetToken = generateResetToken();
-        const tokenExpiration = generateTokenExpiration();
-
-        user.validate = () => { };
-
-        user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = tokenExpiration;
-        await user.save();
-
-        const resetUrl = `https://ecommerce-website-cyan-pi.vercel.app/reset-password/${resetToken}`;
-        const mailOptions = {
-            from: process.env.EMAIL,
-            to: email,
-            subject: 'طلب إعادة تعيين كلمة المرور',
-            text: `لقد تلقّيت هذا البريد الإلكتروني لأنك (أو شخصًا آخر) طلبت إعادة تعيين كلمة المرور لحسابك.\n\nيرجى النقر على الرابط التالي أو نسخه ولصقه في المتصفح لإتمام العملية:\n${resetUrl}\n\nإذا لم تطلب ذلك، يمكنك تجاهل هذا البريد، وستظل كلمة المرور الخاصة بك كما هي.\n\nيرجى ملاحظة أن هذا الرابط سينتهي خلال 10 دقائق.\n\nإذا واجهت أي مشكلة أو كنت بحاجة إلى مساعدة، لا تتردد في التواصل معنا.\n\nمع تحياتنا،\nفريق برمجلي ❤️`
-        };
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.log('Error sending email:', error);
-                return res.status(500).json({ message: 'Error sending reset email' });
-            }
-            res.status(200).json({ message: 'Reset password email sent' });
-        });
-    } catch (err) {
-        next({ message: 'Error processing forgot password request', error: err.message });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    // لو المستخدم مسجل بجوجل
+    if (user.isGoogleUser) {
+      return res.status(400).json({
+        message:
+          "Google users cannot reset their password. Please use Google to sign in.",
+      });
+    }
+
+    // توليد التوكن ووقت انتهاء الصلاحية
+    const resetToken = generateResetToken();
+    const tokenExpiration = generateTokenExpiration();
+
+    user.validate = () => {};
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = tokenExpiration;
+    await user.save({ validateBeforeSave: false });
+
+    // اللينك اللي هيوصل المستخدم
+    const resetLink = `http://localhost:3001/ResetPassword/${resetToken}`;
+
+    // رسالة الإيميل
+    const mailOptions = {
+      from: `"Smar4 Support" \n <${process.env.EMAIL}>`,
+      to: email,
+      subject: "طلب إعادة تعيين كلمة المرور",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto; border:1px solid #eee; border-radius:10px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.1)">
+          <div style="background:#f59e0b; color:#fff; padding:15px; text-align:center; font-size:20px; font-weight:bold;">
+            فريق دعم Smar4
+          </div>
+          <div style="padding:20px; color:#333; line-height:1.6;">
+            <h2 style="color:#f59e0b; text-align:center;">إعادة تعيين كلمة المرور</h2>
+            <p>مرحبًا بك،</p>
+            <p>لقد تلقينا طلبًا لإعادة تعيين كلمة المرور الخاصة بحسابك.</p>
+            <p>اضغط على الزر أدناه لإعادة تعيين كلمة المرور:</p>
+            <div style="text-align:center; margin:20px 0;">
+              <a href="${resetLink}" style="background:#f59e0b; color:#fff; text-decoration:none; padding:12px 20px; border-radius:6px; font-weight:bold; display:inline-block;">إعادة تعيين كلمة المرور</a>
+            </div>
+            <p>إذا لم تقم أنت بطلب إعادة التعيين، يمكنك تجاهل هذه الرسالة بأمان.</p>
+          </div>
+          <div style="background:#f7f7f7; padding:15px; text-align:center; font-size:14px; color:#666;">
+            هل تحتاج مساعدة؟ تواصل مع فريق الدعم: 
+            <a href="mailto:support@smar4.com" style="color:#f59e0b; text-decoration:none;">needsone2@gmail.com</a>
+          </div>
+        </div>
+      `,
+    };
+
+    // إرسال الإيميل
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log("Error sending email:", error);
+        return res.status(500).json({ message: "Error sending reset email" });
+      }
+      res.status(200).json({ message: "Reset password email sent" });
+    });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).json({
+      message: "Error processing forgot password request",
+      error: err.message,
+    });
+  }
 };
+
 
 const resetPassword = async (req, res, next) => {
     try {

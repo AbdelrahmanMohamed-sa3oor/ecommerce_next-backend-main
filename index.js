@@ -16,6 +16,7 @@ const userRouter = require('./routers/user');
 const dashboardRouter = require('./dashboard/index');
 const settingsRouter = require('./routers/settings');
 const BannerRouter = require('./routers/routesBanner');
+const contactRouter = require('./routers/contact');
 
 
 const app = express();
@@ -92,7 +93,8 @@ const startServer = async () => {
                     orders: '/api/orders',
                     reviews: '/api/reviews',
                     coupons: '/api/coupons',
-                    dashboard: '/api/dashboard'
+                    dashboard: '/api/dashboard',
+                    contact: '/api/contact', 
                 }
             });
         });
@@ -108,6 +110,7 @@ const startServer = async () => {
         app.use('/api/dashboard', dashboardRouter);
         app.use('/api/settings', settingsRouter);
         app.use('/api/banner', BannerRouter );
+        app.use('/api/contact', contactRouter);
 
 
 
@@ -147,7 +150,7 @@ const startServer = async () => {
         });
 
         // Start server
-        const PORT = process.env.PORT || 3000;
+        const PORT =  3000;
         app.listen(PORT, () => {
             console.log(`Server started on port ${PORT}`);
             console.log(`Local: http://localhost:${PORT}`);

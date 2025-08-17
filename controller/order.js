@@ -195,8 +195,6 @@ const createOrder = async (req, res, next) => {
     }
 };
 
-
-
 const getAllOrders = async (req, res, next) => {
     try {
         if (req.user.role == 'admin') {
@@ -250,7 +248,6 @@ const getOrderById = async (req, res, next) => {
     }
 };
 
-
 const getUserOrders = async (req, res, next) => {
     try {
         const { userId } = req.params;
@@ -268,30 +265,43 @@ const getUserOrders = async (req, res, next) => {
     }
 };
 
-
-
-
 const updateOrderStatus = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
 
+        // تحديث الحالة فقط بدون populate
         const order = await Order.findByIdAndUpdate(
             id,
             { status },
             { new: true, runValidators: true }
-        ).populate('user').populate('items.product');
+        );
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
 
         res.status(200).json({ status: 'success', order });
-        await sendMail(order.user.email, 'تم تحديث حالة الطلب', `تم تغيير حالة طلبك إلى: ${order.status}`);
+        
+        // إرسال email إذا كان user موجود
+        if (order.user) {
+            try {
+                const user = await User.findById(order.user);
+                if (user && user.email) {
+                    await sendMail(user.email, 'تم تحديث حالة الطلب', `تم تغيير حالة طلبك إلى: ${order.status}`);
+                }
+            } catch (emailError) {
+                console.error('Email error:', emailError);
+                // لا توقف العملية إذا فشل الإيميل
+            }
+        }
 
     } catch (err) {
+        console.error('Update order error:', err);
         res.status(500).json({
-            status: 'error', message: "Failed to update order status", error: err.message
+            status: 'error', 
+            message: "Failed to update order status", 
+            error: err.message
         });
     }
 };
@@ -482,40 +492,6 @@ const createOrderWithCart = async (req, res, next) => {
     }
 };
 
-
-// const cancelOrder = async (req, res, next) => {
-//     try {
-//         const { id } = req.params;
-//         const order = await Order.findById(id);
-
-//         if (!order) {
-//             return res.status(404).json({ message: "Order not found" });
-//         }
-
-//         if (order.status !== 'pending') {
-//             return res.status(400).json({
-//                 message: "Only pending orders can be cancelled"
-//             });
-//         }
-
-//         order.status = 'cancelled';
-//         await order.save();
-
-//         const populatedOrder = await order
-//             .populate('user')
-//   .populate('cartItems.product')
-//   .populate('cartItems.variantId');
-
-//         res.status(200).json({ status: 'success', populatedOrder });
-//         await sendMail(order.user.email, 'تم إلغاء الطلب', `تم إلغاء طلبك رقم ${order._id}.`);
-//     } catch (err) {
-//         res.status(500).json({
-//             status: 'error', message: "Failed to cancel order", error: err.message
-//         });
-//     }
-// };
-
-
 const cancelOrder = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -549,7 +525,6 @@ const cancelOrder = async (req, res, next) => {
     }
 };
 
-
 module.exports = {
     getAllOrders,
     getOrderById,
@@ -558,5 +533,4 @@ module.exports = {
     createOrder,
     createOrderWithCart,
     cancelOrder,
-
 }

@@ -138,6 +138,13 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: [true, 'Product image cover is required']
     },
+    PriceBeforeDiscount:{
+        type: Number
+    },
+    ShortDescription:{
+        type:String,
+        minlength:10,
+    },
     features: [{
         name: String,
         value: String

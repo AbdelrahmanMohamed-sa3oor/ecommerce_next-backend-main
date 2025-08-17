@@ -300,6 +300,7 @@ exports.filterProducts = catchAsync(async (req, res, next) => {
 //     }
 // });
 exports.createProduct = catchAsync(async (req, res, next) => {
+    console.log(req.body.PriceBeforeDiscount, req.body.ShortDescription);
     try {
         if (!req.files || !req.files.imageCover) {
             return next(new AppError('Image cover is required', 400));
