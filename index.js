@@ -26,7 +26,7 @@ console.log(process.env.PORT);
 app.use(express.json());
 // CORS configuration
 app.use(cors({
-    origin:'*',
+    origin:'https://s4mra-ixgnaa87v-abdelrahman-mohameds-projects-2fd316c8.vercel.app',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type', 
@@ -150,7 +150,7 @@ const startServer = async () => {
         });
 
         // Start server
-        const PORT =  3000;
+        const PORT = process.env.PORT || 3000;
         app.listen(PORT, () => {
             console.log(`Server started on port ${PORT}`);
             console.log(`Local: http://localhost:${PORT}`);
