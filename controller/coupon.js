@@ -1,5 +1,5 @@
 const Coupon = require('../models/coupon.model');
-const Product = require('../models/product.model');
+const {Product} = require('../models/product.model');
 const ApiError = require('../utils/appError');
 const catchAsyncError = require('../utils/catchAsync');
 
@@ -122,6 +122,25 @@ const deleteCoupon = catchAsyncError(async (req, res, next) => {
 
     res.status(204).json({ success: true, data: null });
 });
+const getCouponsByProduct = catchAsyncError(async (req, res, next) => {
+  const { productId } = req.params;
+
+  // هات كل الكوبونات اللي مضاف فيها المنتج
+  const coupons = await Coupon.find({
+    $or: [
+      { applyTo: 'all' }, // الكوبونات اللي شغالة على الكل
+      { applyTo: 'products', products: productId }, // اللي على منتجات محددة
+      { applyTo: 'categories', categories: { $in: [] } } // سيبها فاضية أو اربطها بعدين
+    ],
+    isActive: true
+  })
+    .populate('categories', 'name')
+    .populate('products', 'name price');
+
+  res.status(200).json({ success: true, coupons });
+});
+
+
 
 const validateCoupon = catchAsyncError(async (req, res, next) => {
     const { code: rawCode } = req.params; // Get raw code from params
@@ -199,5 +218,6 @@ module.exports = {
     createCoupon,
     updateCoupon,
     deleteCoupon,
-    validateCoupon
+    validateCoupon,
+    getCouponsByProduct
 };

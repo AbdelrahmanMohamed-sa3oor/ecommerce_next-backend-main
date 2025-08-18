@@ -8,7 +8,8 @@ const {
     getCouponById,
     updateCoupon,
     deleteCoupon,
-    validateCoupon
+    validateCoupon,
+    getCouponsByProduct
 } = require('../controller/coupon');
 
 /**
@@ -251,6 +252,7 @@ const {
 
 // Public routes
 router.get('/validate/:name', validateCoupon);
+router.get('/product-coupon/:id',getCouponsByProduct)
 
 // Admin routes (requires both authentication and admin role)
 router.use(isAuthenticated, authorizeAdmin);

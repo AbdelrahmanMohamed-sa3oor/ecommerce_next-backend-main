@@ -26,7 +26,7 @@ console.log(process.env.PORT);
 app.use(express.json());
 // CORS configuration
 app.use(cors({
-    origin:'https://s4mra-ixgnaa87v-abdelrahman-mohameds-projects-2fd316c8.vercel.app',
+    origin:['https://s4mra.vercel.app','*'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type', 
@@ -36,9 +36,9 @@ app.use(cors({
         'X-Client-Type',
         'x-api-key',
         'x-admin-secret', 
-        'x-client-type'
-    ],
-    credentials: true
+        'x-client-type',
+
+    ]
 }));
 
 // Database connection

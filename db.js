@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-const MONGODB_URI = 'mongodb+srv://abdelrahmansa3oor:QMDrRnuyjAq7Mk0V@ecommerce-cluster.pyvydra.mongodb.net/ecommerce?retryWrites=true&w=majority&appName=ecommerce-cluster'
-console.log(MONGODB_URI);
+// const MONGODB_URI = 'mongodb+srv://abdelrahmansa3oor:QMDrRnuyjAq7Mk0V@ecommerce-cluster.pyvydra.mongodb.net/ecommerce?retryWrites=true&w=majority&appName=ecommerce-cluster'
+// console.log(MONGODB_URI);
 
-mongoose.connect(MONGODB_URI, {
+mongoose.connect(process.env.CONNECTION_STRING, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   serverSelectionTimeoutMS: 5000,

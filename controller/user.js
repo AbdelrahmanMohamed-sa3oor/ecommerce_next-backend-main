@@ -722,8 +722,6 @@ const removeAddress = async (req, res, next) => {
 // console.log(process.env.PASSWORD);
 
 const transporter = nodemailer.createTransport({
-
-
     service: 'gmail',
     auth: {
         user: process.env.EMAIL,

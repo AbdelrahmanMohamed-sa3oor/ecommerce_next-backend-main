@@ -37,7 +37,7 @@ const getProductReviews = async (req, res, next) => {
             .populate('user', 'name')
             .sort('-createdAt');
             
-        res.status(200).json({ status: 'success', reviews });
+        res.status(200).json({ status: 'success', reviews ,count: reviews.length,});
     } catch (err) {
         next({ message: "Failed to retrieve product reviews", error: err.message });
     }
