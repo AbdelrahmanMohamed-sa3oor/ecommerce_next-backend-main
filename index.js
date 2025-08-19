@@ -26,7 +26,7 @@ console.log(process.env.PORT);
 app.use(express.json());
 // CORS configuration
 app.use(cors({
-    origin:['https://s4mra.vercel.app','*'],
+    origin:['https://s4mra.vercel.app'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type', 
@@ -70,10 +70,6 @@ async function connectToDatabase() {
 
 app.use(express.static('static'));
 // Initialize app with database connection first
-app.get("/", (req, res) => {
-  res.send("✅ API is running on Railway!");
-});
-
 const startServer = async () => {
     try {
         // Wait for database connection
@@ -154,10 +150,12 @@ const startServer = async () => {
         });
 
         // Start server
-        app.listen(process.env.PORT || 8080, "0.0.0.0", () => {
-  console.log(`Server started on port ${process.env.PORT || 8080}`);
-});
-
+        const PORT = process.env.PORT || 12345
+        app.listen(PORT, () => {
+            console.log(`Server started on port ${PORT}`);
+            console.log(`Local: http://localhost:${PORT}`);
+            console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
+        });
 
     } catch (error) {
         console.error('Failed to start server:', error);
