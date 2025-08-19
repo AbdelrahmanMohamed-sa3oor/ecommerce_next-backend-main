@@ -70,6 +70,10 @@ async function connectToDatabase() {
 
 app.use(express.static('static'));
 // Initialize app with database connection first
+app.get("/", (req, res) => {
+  res.send("✅ API is running on Railway!");
+});
+
 const startServer = async () => {
     try {
         // Wait for database connection
