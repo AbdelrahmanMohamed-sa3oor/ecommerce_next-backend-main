@@ -150,7 +150,7 @@ const startServer = async () => {
         });
 
         // Start server
-        const PORT = process.env.PORT 
+        const PORT = process.env.PORT || 12345
         app.listen(PORT, () => {
             console.log(`Server started on port ${PORT}`);
             console.log(`Local: http://localhost:${PORT}`);
