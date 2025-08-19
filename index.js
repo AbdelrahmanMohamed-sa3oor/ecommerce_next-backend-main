@@ -15,7 +15,6 @@ const couponRouter = require('./routers/coupon');
 const userRouter = require('./routers/user');
 const dashboardRouter = require('./dashboard/index');
 const settingsRouter = require('./routers/settings');
-const BannerRouter = require('./routers/routesBanner');
 const contactRouter = require('./routers/contact');
 
 
@@ -109,7 +108,6 @@ const startServer = async () => {
         app.use('/api/coupons', couponRouter);
         app.use('/api/dashboard', dashboardRouter);
         app.use('/api/settings', settingsRouter);
-        app.use('/api/banner', BannerRouter );
         app.use('/api/contact', contactRouter);
 
 
