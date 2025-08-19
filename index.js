@@ -150,12 +150,10 @@ const startServer = async () => {
         });
 
         // Start server
-        const PORT = process.env.PORT || 12345
-        app.listen(PORT, () => {
-            console.log(`Server started on port ${PORT}`);
-            console.log(`Local: http://localhost:${PORT}`);
-            console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
-        });
+        app.listen(process.env.PORT || 8080, "0.0.0.0", () => {
+  console.log(`Server started on port ${process.env.PORT || 8080}`);
+});
+
 
     } catch (error) {
         console.error('Failed to start server:', error);
