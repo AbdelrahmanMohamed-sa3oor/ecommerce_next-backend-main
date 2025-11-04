@@ -26,7 +26,7 @@ console.log(process.env.PORT);
 app.use(express.json());
 // CORS configuration
 app.use(cors({
-    origin:['https://s4mra.vercel.app'],
+    origin:['https://s4mra.vercel.app','http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
         'Content-Type', 
