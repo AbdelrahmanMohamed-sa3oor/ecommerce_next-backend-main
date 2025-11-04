@@ -37,7 +37,6 @@ app.use(cors({
         'x-api-key',
         'x-admin-secret', 
         'x-client-type',
-
     ]
 }));
 
