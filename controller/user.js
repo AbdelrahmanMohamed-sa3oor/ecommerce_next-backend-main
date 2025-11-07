@@ -717,9 +717,7 @@ const removeAddress = async (req, res, next) => {
         next({ message: 'Failed to remove address', error: err.message });
     }
 };
-//------------------------------------------------------------
-// console.log(process.env.EMAIL);
-// console.log(process.env.PASSWORD);
+
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -797,6 +795,7 @@ const googleLogin = async (req, res) => {
                 token,
                 hasToken: true,
                 hasUser: true,
+                redirectUrl: `/en`,
                 adminData: user.role === 'admin' ? {
                     ...userData,
                     isAdmin: true
@@ -808,8 +807,6 @@ const googleLogin = async (req, res) => {
         res.status(401).json({ success: false, message: 'Invalid ID Token' });
     }
 };
-
-
 
 const generateResetToken = () => {
     return crypto.randomBytes(20).toString('hex');
