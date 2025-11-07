@@ -795,7 +795,6 @@ const googleLogin = async (req, res) => {
                 token,
                 hasToken: true,
                 hasUser: true,
-                redirectUrl: `/en`,
                 adminData: user.role === 'admin' ? {
                     ...userData,
                     isAdmin: true
